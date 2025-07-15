@@ -4,11 +4,16 @@ const app = express();
 const PORT = 4000;
 const da = require("./data-access");
 
+
 app.use(express.static('public'));
 
 app.get("/customers", async(req, res) => {
-    const cust = await da.getCustomers();
-    res.send(cust);
+    const [customers, error] = await da.getCustomers();
+    if (error) {
+        console.error('Error', error);
+        return res.status(500).json({error: 'Failed to fetch'});
+    }
+    res.send(customers);
 });
 
 app.listen(PORT, () => {
