@@ -16,6 +16,14 @@ app.get("/customers", async(req, res) => {
     res.send(customers);
 });
 
+app.get("/reset", async(req, res) => {
+    const [result, error] = await da.resetCustomers();
+    if (error) {
+        return res.status(500).json({error: 'Failed to reset'});
+    }
+    res.send(result);
+})
+
 app.listen(PORT, () => {
     console.log(`App is running on port ${PORT}`)
 })
