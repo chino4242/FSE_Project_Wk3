@@ -93,4 +93,4 @@ async function resetCustomers() {
 }
 
 dbStartup();
-module.exports = { getCustomers, resetCustomers, addCustomer, getCustomerById, updateCustomer };
+module.exports = { getCustomers, resetCustomers, addCustomer, getCustomerById, updateCustomer, deleteCustomerById };
