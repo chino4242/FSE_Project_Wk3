@@ -3,8 +3,9 @@ const path = require('path');
 const app = express();
 const PORT = 4000;
 const da = require("./data-access");
+const bodyParser = require('body-parser');
 
-
+app.use(bodyParser.json());
 app.use(express.static('public'));
 
 app.get("/customers", async(req, res) => {
@@ -14,6 +15,25 @@ app.get("/customers", async(req, res) => {
         return res.status(500).json({error: 'Failed to fetch'});
     }
     res.send(customers);
+});
+
+app.post('/customers', async(req, res) => {
+    const newCustomer = req.body;
+    if (newCustomer === null || req.body != {}) {
+        res.status(400);
+        res.send("missing request body");
+    } else {
+        const [status, id, errMessage] = await da.addCustomer(newCustomer);
+        if (status ==='success') {
+            res.status(201);
+            let response = {...newCustomer};
+            response["_id"] = id;
+            res.send(response);
+        } else {
+            res.status(400);
+            res.send(errMessage);
+        }
+    }
 });
 
 app.get("/reset", async(req, res) => {
