@@ -17,6 +17,17 @@ app.get("/customers", async(req, res) => {
     res.send(customers);
 });
 
+app.get('/customers/:id', async (req, res) => {
+    const id = req.params.id;
+    const [cust, err] = await da.getCustomerById(id);
+    if (!cust){
+        res.status(404);
+        res.send(err);
+    } else {
+        res.send(cust);
+    }
+})
+
 app.post('/customers', async(req, res) => {
     const newCustomer = req.body;
     if (newCustomer === null || req.body != {}) {
