@@ -10,6 +10,36 @@ console.log("🔍 DEBUG: All environment variables:", Object.keys(process.env));
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+app.get('/customers/find', async (req, res) => {
+    const queryKeys = Object.keys(req.query);
+    if (queryKeys.length === 0) {
+        return res.status(400).json({error: "query string is required"});
+    }
+    if (queryKeys.length > 1) {
+        return res.status(400).json({error: "only one search parameter is allowed"});
+    }
+    const searchField = queryKeys[0];
+    const alllowedFields = ['id', 'email', 'password'];
+    if (!alllowedFields.includes(searchField)) {
+        return res.status(400).json({ 
+            error: "name must be one of the following (id, email, password)" 
+        });
+    }
+    const searchValue = req.query[searchField];
+
+    const [customers, error] = await da.findCustomers(searchField, searchValue);
+    if (error) {
+        return res.status(500).json({ error });
+    }
+    
+    if (customers.length === 0) {
+        return res.status(404).json({ 
+            error: "no matching customer documents found" 
+        });
+    }
+    
+    res.json(customers);
+});
 app.get("/customers", requireApiKey, async(req, res) => {
     const [customers, error] = await da.getCustomers();
     if (error) {

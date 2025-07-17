@@ -75,6 +75,18 @@ async function deleteCustomerById(id){
     }
 }
 
+async function findCustomers(field, value){
+    try {
+        const searchValue = (field === 'id') ? parseInt(value) : value;
+        const filter = {[field]: searchValue};
+        const customers = await collection.find(filter).toArray();
+        return [customers, null];
+    } catch (err){
+        console.log(err.message);
+        return [null, err.message];
+    }
+}
+
 async function resetCustomers() {
     let data = [{ "id": 0, "name": "Mary Jackson", "email": "maryj@abc.com", "password": "maryj" },
         { "id": 1, "name": "Karen Addams", "email": "karena@abc.com", "password": "karena" },
@@ -93,4 +105,4 @@ async function resetCustomers() {
 }
 
 dbStartup();
-module.exports = { getCustomers, resetCustomers, addCustomer, getCustomerById, updateCustomer, deleteCustomerById };
+module.exports = { getCustomers, resetCustomers, addCustomer, getCustomerById, updateCustomer, deleteCustomerById, findCustomers };
