@@ -1,14 +1,16 @@
 const express = require('express');
-const path = require('path');
 const app = express();
 const PORT = 4000;
 const da = require("./data-access");
 const bodyParser = require('body-parser');
 
+console.log("🔍 DEBUG: API_KEY on server startup:", process.env.API_KEY);
+console.log("🔍 DEBUG: All environment variables:", Object.keys(process.env));
+
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-app.get("/customers", async(req, res) => {
+app.get("/customers", requireApiKey, async(req, res) => {
     const [customers, error] = await da.getCustomers();
     if (error) {
         console.error('Error', error);
@@ -17,7 +19,7 @@ app.get("/customers", async(req, res) => {
     res.send(customers);
 });
 
-app.get('/customers/:id', async (req, res) => {
+app.get('/customers/:id', requireApiKey, async (req, res) => {
     const id = req.params.id;
     const [cust, err] = await da.getCustomerById(id);
     if (!cust){
@@ -28,7 +30,7 @@ app.get('/customers/:id', async (req, res) => {
     }
 })
 
-app.post('/customers', async(req, res) => {
+app.post('/customers', requireApiKey, async(req, res) => {
     const newCustomer = req.body;
     if (!newCustomer || newCustomer === null || Object.keys(newCustomer).length===0) {
         res.status(400).send("missing request body");
@@ -46,7 +48,7 @@ app.post('/customers', async(req, res) => {
 }
 );
 
-app.put('/customers/:id', async (req, res) => {
+app.put('/customers/:id', requireApiKey, async (req, res) => {
     const id = req.params.id;
     const updatedCustomer = req.body;
     if (updatedCustomer === null || Object.keys(newCustomer).length===0) {
@@ -63,7 +65,7 @@ app.put('/customers/:id', async (req, res) => {
     }
 });
 
-app.delete('/customers/:id', async (req, res) => {
+app.delete('/customers/:id', requireApiKey, async (req, res) => {
     const id = req.params.id;
     const [message, errMessage] = await da.deleteCustomerById(id);
     if (message) {
@@ -81,6 +83,28 @@ app.post("/reset", async(req, res) => {
     }
     res.send(result);
 })
+
+function requireApiKey(req, res, next) {
+    console.log("🔐 Middleware called! Checking API key...");
+    console.log("Provided key:", req.headers['x-api-key']);
+    console.log("Expected key:", process.env.API_KEY);
+    
+    const providedKey = req.headers['x-api-key'];
+    const correctKey = process.env.API_KEY;
+    
+    if (!providedKey) {
+        console.log("❌ No API key provided");
+        return res.status(401).json({ error: "API Key is missing" });
+    }
+    
+    if (providedKey !== correctKey) {
+        console.log("❌ API key invalid");
+        return res.status(403).json({ error: "API Key is invalid" });
+    }
+    
+    console.log("✅ API key valid");
+    next();
+}
 
 app.listen(PORT, () => {
     console.log(`App is running on port ${PORT}`)
