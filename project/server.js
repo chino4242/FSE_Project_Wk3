@@ -1,9 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const PORT = 4000;
 const da = require("./data-access");
 const bodyParser = require('body-parser');
+const {requireApiKey} = require("./middleware/auth");
+console.log('🔍 Middleware imported:', typeof requireApiKey);
 
+console.log('Environment variables loaded:');
+console.log('API_KEY from env:', process.env.API_KEY);
+console.log('All env vars:', Object.keys(process.env).filter(key => key === 'API_KEY'));
 console.log("🔍 DEBUG: API_KEY on server startup:", process.env.API_KEY);
 console.log("🔍 DEBUG: All environment variables:", Object.keys(process.env));
 
@@ -81,7 +87,7 @@ app.post('/customers', requireApiKey, async(req, res) => {
 app.put('/customers/:id', requireApiKey, async (req, res) => {
     const id = req.params.id;
     const updatedCustomer = req.body;
-    if (updatedCustomer === null || Object.keys(newCustomer).length===0) {
+    if (updatedCustomer === null || Object.keys(updatedCustomer).length===0) {
         res.status(404).send('missing request body');
     } else {
         delete updatedCustomer._id;
@@ -113,28 +119,6 @@ app.post("/reset", async(req, res) => {
     }
     res.send(result);
 })
-
-function requireApiKey(req, res, next) {
-    console.log("🔐 Middleware called! Checking API key...");
-    console.log("Provided key:", req.headers['x-api-key']);
-    console.log("Expected key:", process.env.API_KEY);
-    
-    const providedKey = req.headers['x-api-key'];
-    const correctKey = process.env.API_KEY;
-    
-    if (!providedKey) {
-        console.log("❌ No API key provided");
-        return res.status(401).json({ error: "API Key is missing" });
-    }
-    
-    if (providedKey !== correctKey) {
-        console.log("❌ API key invalid");
-        return res.status(403).json({ error: "API Key is invalid" });
-    }
-    
-    console.log("✅ API key valid");
-    next();
-}
 
 app.listen(PORT, () => {
     console.log(`App is running on port ${PORT}`)
