@@ -25,8 +25,8 @@ app.get('/customers/find', async (req, res) => {
         return res.status(400).json({error: "only one search parameter is allowed"});
     }
     const searchField = queryKeys[0];
-    const alllowedFields = ['id', 'email', 'password'];
-    if (!alllowedFields.includes(searchField)) {
+    const allowedFields = ['id', 'email', 'password'];
+    if (!allowedFields.includes(searchField)) {
         return res.status(400).json({ 
             error: "name must be one of the following (id, email, password)" 
         });
@@ -67,6 +67,21 @@ app.get('/customers/:id', requireApiKey, async (req, res) => {
 })
 
 app.post('/customers', requireApiKey, async(req, res) => {
+        const { email } = req.body;  
+        const [existingCustomer, checkError] = await da.checkForDuplicate(email);
+    
+        if (checkError) {
+            return res.status(500).json({ error: checkError });
+        }
+        
+        if (existingCustomer) {
+            return res.status(409).json({ 
+                message: 'Customer with this email already exists',
+                field: 'email',
+                existingCustomer: existingCustomer
+            });
+        }
+    
     const newCustomer = req.body;
     if (!newCustomer || newCustomer === null || Object.keys(newCustomer).length===0) {
         res.status(400).send("missing request body");
